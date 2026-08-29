@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Analytics & Real-Time Telemetry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="brand">
+                <div class="logo-mark">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                        <line x1="4" y1="22" x2="4" y2="15"></line>
+                    </svg>
+                </div>
+                <div class="brand-info">
+                    <span class="brand-title">Visitor Analytics</span>
+                    <span class="system-status"><span class="status-dot"></span> Operational</span>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <span class="version-tag">Engine v1.0.0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Link Generator Section -->
+        <section class="section-box creator-section">
+            <div class="section-header">
+                <h2>Create Tracking Endpoint</h2>
+                <p>Generate a unique redirect URL to collect visitor IP, country, city, ISP/ASN, OS, browser, device, and referrer metadata.</p>
+            </div>
+
+            <form id="createLinkForm" class="link-form">
+                <div class="form-row">
+                    <div class="form-control flex-grow-2">
+                        <label for="targetUrl">Destination Target URL</label>
+                        <input type="url" id="targetUrl" placeholder="https://example.com/target" required autocomplete="off">
+                    </div>
+
+                    <div class="form-control flex-grow-1">
+                        <label for="customSlug">Custom Path Identifier <span class="label-muted">(optional)</span></label>
+                        <div class="input-prefix-group">
+                            <span class="input-prefix">/r/</span>
+                            <input type="text" id="customSlug" placeholder="campaign-2026" pattern="^[a-zA-Z0-9-_]+$">
+                        </div>
+                    </div>
+
+                    <div class="form-action">
+                        <button type="submit" class="btn btn-primary" id="createBtn">
+                            <span>Create Endpoint</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="createAlert" class="alert hidden"></div>
+        </section>
+
+        <!-- Dashboard Workspace -->
+        <section class="workspace-grid">
+            <!-- Sidebar: Endpoints List -->
+            <aside class="panel sidebar-panel">
+                <div class="panel-heading">
+                    <div class="panel-title-wrap">
+                        <h3>Endpoints</h3>
+                        <span class="counter-badge" id="linksCountBadge">0</span>
+                    </div>
+                    <button class="btn-refresh" id="refreshBtn" title="Refresh data">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="linksList" class="endpoint-list">
+                    <div class="empty-state">
+                        <p class="empty-title">No endpoints configured</p>
+                        <p class="empty-desc">Create your first tracking link above.</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content: Telemetry & Analytics -->
+            <section class="panel analytics-panel">
+                <div id="noSelectionState" class="empty-state large-empty">
+                    <p class="empty-title">Select an endpoint</p>
+                    <p class="empty-desc">Choose a tracked endpoint on the left to inspect its traffic logs, network ISP, and client breakdown.</p>
+                </div>
+
+                <div id="analyticsContent" class="analytics-body hidden">
+                    <!-- Endpoint Top Bar -->
+                    <div class="endpoint-detail-bar">
+                        <div class="endpoint-info">
+                            <div class="endpoint-badge" id="selectedSlugBadge">/r/slug</div>
+                            <div class="target-row">
+                                <span class="text-muted">Target:</span>
+                                <a href="#" target="_blank" id="selectedTargetUrl" class="target-link">https://example.com</a>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary btn-sm" id="copyTrackLinkBtn">Copy URL</button>
+                            <a href="#" target="_blank" class="btn btn-secondary btn-sm" id="testTrackLinkBtn">Test Redirect</a>
+                        </div>
+                    </div>
+
+                    <!-- Metrics Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Requests</div>
+                            <div class="stat-value" id="totalVisitsCount">0</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-label">Unique IP Addresses</div>
+                            <div class="stat-value" id="uniqueIPsCount">0</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-label">Resolved Countries</div>
+                            <div class="stat-value" id="uniqueCountriesCount">0</div>
+                        </div>
+
+                        <div class="stat-box">
+                            <div class="stat-label">Top Operating System</div>
+                            <div class="stat-value text-sm" id="topOSStat">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown Summaries (OS, Browser, Device, Country) -->
+                    <div class="breakdown-grid">
+                        <div class="breakdown-card">
+                            <div class="breakdown-title">Operating Systems</div>
+                            <div id="osBreakdownList" class="breakdown-items">
+                                <span class="text-dim">No data</span>
+                            </div>
+                        </div>
+
+                        <div class="breakdown-card">
+                            <div class="breakdown-title">Browsers</div>
+                            <div id="browserBreakdownList" class="breakdown-items">
+                                <span class="text-dim">No data</span>
+                            </div>
+                        </div>
+
+                        <div class="breakdown-card">
+                            <div class="breakdown-title">Device Types</div>
+                            <div id="deviceBreakdownList" class="breakdown-items">
+                                <span class="text-dim">No data</span>
+                            </div>
+                        </div>
+
+                        <div class="breakdown-card">
+                            <div class="breakdown-title">Top Countries</div>
+                            <div id="countryBreakdownList" class="breakdown-items">
+                                <span class="text-dim">No data</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Logs Table -->
+                    <div class="logs-section">
+                        <div class="logs-header">
+                            <h4>Detailed Visitor Telemetry Logs</h4>
+                            <span class="live-indicator">Auto-polling 5s</span>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 155px;">Timestamp (UTC)</th>
+                                        <th style="width: 125px;">Client IP</th>
+                                        <th style="width: 175px;">Location</th>
+                                        <th style="width: 140px;">Network / ISP</th>
+                                        <th style="width: 140px;">OS & Browser</th>
+                                        <th style="width: 100px;">Device</th>
+                                        <th>User Agent / Referrer</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="visitsTableBody">
+                                    <tr>
+                                        <td colspan="7" class="table-empty">No visits recorded for this endpoint yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container footer-row">
+            <span>Visitor Analytics System</span>
+            <span class="footer-meta">Go standard library runtime</span>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
